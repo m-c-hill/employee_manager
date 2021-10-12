@@ -1,26 +1,21 @@
+import json
 import sqlite3
 
 
-# Define DBOperation class to manage all data into the database.
-# Give a name of your choice to the database
-
 class DBOperations:
-    sql_create_table_firsttime = "create table if not exists "
-
-    sql_create_table = "create table TableName"
-
-    sql_insert = ""
-    sql_select_all = "select * from TableName"
-    sql_search = "select * from TableName where EmployeeID = ?"
-    sql_update_data = ""
-    sql_delete_data = ""
-    sql_drop_table = ""
+    # TODO: write docstring for class
+    # Define DBOperation class to manage all data into the database.
 
     def __init__(self):
+
+        # Import sql queries from json utils file
+        with open('sql_queries.json') as sql_queries_file:
+            sql_queries_dict = json.load(sql_queries_file)
+
         try:
             self.conn = sqlite3.connect("DBName.db")
             self.cur = self.conn.cursor()
-            self.cur.execute(self.sql_create_table_firsttime)
+            self.cur.execute(self.sql_queries_dict["sql_create_table"])
             self.conn.commit()
         except Exception as e:
             print(e)
@@ -186,6 +181,27 @@ class Employee:
 # These argument will be definded by the users on the console.
 # The user will select a choice from the menu to interact with the database.
 
+def print_logo() -> None:
+    """Prints the application logo, used on start-up.
+
+    Returns:
+        None
+    """
+    hive_logo = (
+        "*=========================================*\n"
+        "|  _____ _            _   _ _             |\n"
+        "| |_   _| |          | | | (_)            |\n"
+        "|   | | | |__   ___  | |_| |___   _____   |\n"
+        "|   | | | '_ \ / _ \ |  _  | \ \ / / _ \  |\n"
+        "|   | | | | | |  __/ | | | | |\ V /  __/  |\n"
+        "|   \_/ |_| |_|\___| \_| |_/_| \_/ \___|  |\n"
+        "*=========================================*\n"
+        "|       Employee Management System        |\n"
+        "*=========================================*\n"
+    )
+
+    print(hive_logo)
+
 while True:
     print("\n Menu:")
     print("**********")
@@ -215,5 +231,3 @@ while True:
         exit(0)
     else:
         print("Invalid Choice")
-
-
