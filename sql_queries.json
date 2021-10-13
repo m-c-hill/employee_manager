@@ -3,7 +3,8 @@
   "sql_create_table": "CREATE TABLE IF NOT EXISTS employee (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT CHECK( title IN ('Mr', 'Mrs', 'Miss', 'Ms', 'Dr', 'Sir', 'Prof', 'Captain') ) NOT NULL, forename TEXT NOT NULL, surname TEXT NOT NULL, email TEXT NOT NULL UNIQUE, salary REAL NOT NULL)",
   "sql_insert": "INSERT INTO employee(title, forename, surname, email, salary) VALUES(?, ?, ?, ?, ?)",
   "sql_select_all": "SELECT * FROM employee",
-  "sql_search_id": "SELECT * FROM employee WHERE id = ?",
+  "sql_select_id": "SELECT * FROM employee WHERE id = ?",
+  "sql_select_surname": "SELECT * FROM employee WHERE surname = ?",
   "sql_update_data": "UPDATE employee SET ? = ? WHERE id = ?",
   "sql_delete_data": "DELETE FROM employee WHERE id = ?",
   "sql_drop_table": "DROP TABLE employee"

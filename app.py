@@ -4,7 +4,6 @@ import sqlite3
 
 
 class DBOperations:
-    # TODO: write docstring for class
     # Define DBOperation class to manage all data into the database.
 
     def __init__(self):
@@ -14,7 +13,7 @@ class DBOperations:
             self.sql_queries_dict = json.load(sql_queries_file)
 
         try:
-            self.conn = sqlite3.connect("DBName.db")
+            self.conn = sqlite3.connect("TheHive.db")
             self.cur = self.conn.cursor()
             self.cur.execute(self.sql_queries_dict["sql_create_table"])
             self.conn.commit()
@@ -24,7 +23,7 @@ class DBOperations:
             self.conn.close()
 
     def get_connection(self) -> None:
-        self.conn = sqlite3.connect("DBName.db")
+        self.conn = sqlite3.connect("TheHive.db")
         self.cur = self.conn.cursor()
 
     def create_table(self) -> None:
@@ -47,35 +46,15 @@ class DBOperations:
 
             emp = Employee()
 
-            # TODO: validation class
-            title_valid = False
-            while not title_valid:
-                title = input("\nEnter Employee title: ")
-                if not Employee.validate_title(title):
-                    print(f"\n{title} is not a valid title. Please choose from the following: \n"
-                          f"Mr, Mrs, Miss, Ms, Dr, Sir, Prof or Captain.\n")
-                else:
-                    emp.set_employee_title(title.capitalize())
-                    title_valid = True
-
+            emp.set_employee_title(Validation.valid_title_input())
             emp.set_employee_forename(str(input("\nEnter Employee forename: ")).capitalize())
             emp.set_employee_surname(str(input("\nEnter Employee surname: ")).capitalize())
             emp.set_employee_email(str(input("\nEnter Employee email address: ")))
-
-            salary_valid = False
-            while not salary_valid:
-                salary = input("\nEnter Employee salary: £")
-                try:
-                    salary = float(salary)
-                    emp.set_employee_salary(salary)
-                    salary_valid = True
-                except ValueError:
-                    print("Invalid input - please enter a number.\n")
+            emp.set_employee_salary(Validation.valid_salary_input())
 
             self.cur.execute(self.sql_queries_dict["sql_insert"], tuple(emp.employee_str_no_id().split("\n")))
-
-            self.conn.commit()
             print(f"\nInserted record for {emp.forename} {emp.surname} successfully\n")
+            self.conn.commit()
         except Exception as e:
             print(e)
         finally:
@@ -94,36 +73,33 @@ class DBOperations:
         finally:
             self.conn.close()
 
-    '''
     def search_data(self):
         try:
             self.get_connection()
-            id = int(input("Enter Employee ID: "))
-            self.cur.execute(self.sql_search, tuple(str(id)))
-            result = self.cur.fetchone()
-            if type(result) == type(tuple()):
-                for index, detail in enumerate(result):
-                    if index == 0:
-                        print("Employee ID: " + str(detail))
-                    elif index == 1:
-                        print("Employee Title: " + detail)
-                    elif index == 2:
-                        print("Employee Name: " + detail)
-                    elif index == 3:
-                        print("Employee Surname: " + detail)
-                    elif index == 4:
-                        print("Employee Email: " + detail)
-                    else:
-                        print("Salary: " + str(detail))
+            search_type = input("\nSearch by id or by surname. Please enter 'i' or 's': ").strip().lower()
+            if search_type == "i":
+                id_search = Validation.valid_id_input()
+                self.cur.execute(self.sql_queries_dict["sql_select_id"], (id_search,))
+            elif search_type == "s":
+                surname_search = input("\nPlease enter a surname: ").strip().lower().capitalize()
+                self.cur.execute(self.sql_queries_dict["sql_select_surname"], (surname_search,))
             else:
-                print("No Record")
+                print("\nInvalid search type, returning to main menu.\n")
+                return
+            result = self.cur.fetchall()
+            if isinstance(result, list):
+                print(f"\nFound {len(result)} record matching your query:\n")
+                for index, detail in enumerate(result):
+                    Menu.display_results_table(result)
+            else:
+                print(f"No record(s) found.")
 
         except Exception as e:
             print(e)
         finally:
             self.conn.close()
-    '''
 
+    '''
     def update_data(self):
         try:
             self.get_connection()
@@ -142,7 +118,7 @@ class DBOperations:
                 except ValueError:
                     print("Please try again - enter a valid integer ID.")
 
-            result = self.cur.execute(self.sql_queries_dict["sql_select_id"], (id_update,)).fetchall()
+            result = self.cur.execute(self.sql_queries_dict["sql_select_id"], tuple(str(id_update))).fetchall()
 
             if len(result) != 0:
                 valid_field = False
@@ -157,32 +133,24 @@ class DBOperations:
             print(e)
         finally:
             self.conn.close()
-
+    '''
 
     def delete_data(self):
         # Define Delete_data method to delete data from the table. The user will need to input the employee id to
         # delete the corresponding record.
         try:
             self.get_connection()
-            self.select_all()  # Display the records for the user to choose from
             self.cur.execute(self.sql_queries_dict["sql_select_all"])
-            results = self.cur.fetchall()
+            results = self.cur.execute(self.sql_queries_dict["sql_select_all"]).fetchall()
+            if len(results) == 0:
+                print("\nNo records available to delete in Employee table.\n")
+                return
 
-            # TODO: move to validation
-            valid_id = False
-            id_delete = 0
-            while not valid_id:
-                try:
-                    id_delete = input("\nSelect the ID of the employee record to delete. To exit press q: ")
-                    if id_delete.lower() == "q":
-                        return
-                    else:
-                        id_delete = int(id_delete)
-                    valid_id = True
-                except ValueError:
-                    print("Please try again - enter a valid integer ID.")
-
-            result = self.cur.execute(self.sql_queries_dict["sql_select_id"], (id_delete,)).fetchall()
+            id_delete = Validation.valid_id_input()
+            if id_delete == "q":
+                return
+            else:
+                result = self.cur.execute(self.sql_queries_dict["sql_select_id"], (id_delete,)).fetchall()
 
             if len(result) != 0:
                 print(str(len(result)) + " row(s) affected.")
@@ -242,11 +210,6 @@ class Employee:
     def get_salary(self):
         return self.salary
 
-    @staticmethod
-    def validate_title(title):
-        titles = ['Mr', 'Mrs', 'Miss', 'Ms', 'Dr', 'Sir', 'Prof', 'Captain']
-        return title.strip().capitalize() in titles
-
     def employee_str_no_id(self):
         return self.title + "\n" + self.forename + "\n" + self.surname + "\n" + self.email + "\n" + str(
             self.salary)
@@ -257,8 +220,24 @@ class Employee:
             self.salary)
 
 
-class Validation:
-    pass
+class AdminLogin:
+
+    def __init__(self, id, email, username, password, date_of_birth):
+        self.email = email
+        self.username = username
+        self.password = password
+        self.date_of_birth = date_of_birth
+
+    def check_password(self, input_password):
+        pass
+
+    def reset_password(self):
+        date_of_birth = ""  # query the admin table
+        print(f"A password has been sent to your email address: {self.email}\n")
+
+    @staticmethod
+    def check_username_exists(username):
+        pass
 
 
 class Menu:
@@ -294,10 +273,10 @@ class Menu:
         """
         main_menu = (
             "Main Menu: \n\n"
-            " 1. Create table EmployeeUoB\n"
-            " 2. Insert data into EmployeeUoB\n"
-            " 3. Select all data into EmployeeUoB\n"
-            " 4. Search an employee\n"
+            " 1. Create table Employee table\n"
+            " 2. Insert data into Employee table\n"
+            " 3. Show all records in Employee table\n"
+            " 4. Search for employee\n"
             " 5. Update records\n"
             " 6. Delete record\n"
             " 7. Help\n"
@@ -343,10 +322,49 @@ class Menu:
         else:
             print("No results to display.")
 
+    @staticmethod
+    def login_menu():
+        pass
+
+
+class Validation:
+
+    @staticmethod
+    def valid_title_input():
+        titles = ['Mr', 'Mrs', 'Miss', 'Ms', 'Dr', 'Sir', 'Prof', 'Captain']
+
+        while True:
+            title = input("\nEnter Employee title: ").strip().lower().capitalize()
+            if title in titles:
+                return title
+            print(f"\n{title} is not a valid title. Please choose from the following: \n"
+                  f"Mr, Mrs, Miss, Ms, Dr, Sir, Prof or Captain.")
+
+    @staticmethod
+    def valid_salary_input():
+        while True:
+            salary = input("\nEnter Employee salary: £")
+            try:
+                return float(salary)
+            except ValueError:
+                print("\nInvalid input - please enter a number.")
+
+    @staticmethod
+    def valid_id_input():
+        while True:
+            try:
+                id_delete = input("\nSelect an employee ID. To exit press q: ")
+                if id_delete.lower() == "q":
+                    return "q"
+                else:
+                    return int(id_delete)
+            except ValueError:
+                print("Please try again - enter a valid integer ID.")
+
 
 def run():
-    db_ops = DBOperations()
     while True:
+        db_ops = DBOperations()
         Menu.display_logo()
         Menu.display_main_menu()
 
@@ -355,14 +373,11 @@ def run():
 
             if choose_menu == 1:
                 db_ops.create_table()
-                input("Press Enter to return to the main menu...")
             elif choose_menu == 2:
                 db_ops.insert_data()
-                input("Press Enter to return to the main menu...")
             elif choose_menu == 3:
                 Menu.display_logo()
                 db_ops.select_all()
-                input("Press Enter to return to the main menu...")
             elif choose_menu == 4:
                 db_ops.search_data()
             elif choose_menu == 5:
@@ -370,19 +385,17 @@ def run():
             elif choose_menu == 6:
                 Menu.display_logo()
                 db_ops.delete_data()
-                input("Press Enter to return to the main menu...")
             elif choose_menu == 7:
                 Menu.display_logo()
                 Menu.display_help_message()
-                input("Press Enter to return to the main menu...")
             elif choose_menu == 8:
                 exit(0)
             else:
                 print("\nInvalid choice - please try again\n")
-                input("Press Enter to continue...")
         except ValueError:
             print("\nInvalid choice - please enter a number\n")
-            input("Press Enter to continue...")
+
+        input("Press Enter to return to the main menu...")
 
 
 if __name__ == "__main__":
