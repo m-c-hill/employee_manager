@@ -1,4 +1,5 @@
 import json
+import os
 import sqlite3
 
 
@@ -10,7 +11,7 @@ class DBOperations:
 
         # Import sql queries from json utils file
         with open('sql_queries.json') as sql_queries_file:
-            sql_queries_dict = json.load(sql_queries_file)
+            self.sql_queries_dict = json.load(sql_queries_file)
 
         try:
             self.conn = sqlite3.connect("DBName.db")
@@ -22,6 +23,7 @@ class DBOperations:
         finally:
             self.conn.close()
 
+    '''
     def get_connection(self):
         self.conn = sqlite3.connect("DBName.db")
         self.cur = self.conn.cursor()
@@ -69,8 +71,8 @@ class DBOperations:
     def search_data(self):
         try:
             self.get_connection()
-            employeeID = int(input("Enter Employee ID: "))
-            self.cur.execute(self.sql_search, tuple(str(employeeID)))
+            id = int(input("Enter Employee ID: "))
+            self.cur.execute(self.sql_search, tuple(str(id)))
             result = self.cur.fetchone()
             if type(result) == type(tuple()):
                 for index, detail in enumerate(result):
@@ -110,7 +112,8 @@ class DBOperations:
         finally:
             self.conn.close()
 
-    # Define Delete_data method to delete data from the table. The user will need to input the employee id to delete the corrosponding record.
+    # Define Delete_data method to delete data from the table. The user will need to input the employee id to delete the 
+    # corresponding record.
     def delete_data(self):
         try:
             self.get_connection()
@@ -124,22 +127,23 @@ class DBOperations:
             print(e)
         finally:
             self.conn.close()
+    '''
 
 
 class Employee:
     def __init__(self):
-        self.employeeID = 0
-        self.empTitle = ''
-        self.forename = ''
-        self.surname = ''
-        self.email = ''
-        self.salary = 0.0
+        self.id = 0
+        self.title = ""
+        self.forename = ""
+        self.surname = ""
+        self.email = ""
+        self.salary = 0.
 
-    def set_employee_id(self, employeeID):
-        self.employeeID = employeeID
+    def set_employee_id(self, id):
+        self.id = id
 
-    def set_employee_title(self, empTitle):
-        self.empTitle = empTitle
+    def set_employee_title(self, title):
+        self.title = title
 
     def set_forename(self, forename):
         self.forename = forename
@@ -154,10 +158,10 @@ class Employee:
         self.salary = salary
 
     def get_employee_id(self):
-        return self.employeeId
+        return self.id
 
     def get_employee_title(self):
-        return self.empTitle
+        return self.title
 
     def get_forename(self):
         return self.forename
@@ -173,61 +177,104 @@ class Employee:
 
     def __str__(self):
         return str(
-            self.employeeID) + "\n" + self.empTitle + "\n" + self.forename + "\n" + self.surname + "\n" + self.email + "\n" + str(
+            self.id) + "\n" + self.title + "\n" + self.forename + "\n" + self.surname + "\n" + self.email + "\n" + str(
             self.salary)
 
 
-# The main function will parse arguments.
-# These argument will be definded by the users on the console.
-# The user will select a choice from the menu to interact with the database.
+class Menu:
 
-def print_logo() -> None:
-    """Prints the application logo, used on start-up.
+    @staticmethod
+    def display_logo() -> None:
+        """Prints the application logo, used in the main menu.
 
-    Returns:
-        None
-    """
-    hive_logo = (
-        "*=========================================*\n"
-        "|  _____ _            _   _ _             |\n"
-        "| |_   _| |          | | | (_)            |\n"
-        "|   | | | |__   ___  | |_| |___   _____   |\n"
-        "|   | | | '_ \ / _ \ |  _  | \ \ / / _ \  |\n"
-        "|   | | | | | |  __/ | | | | |\ V /  __/  |\n"
-        "|   \_/ |_| |_|\___| \_| |_/_| \_/ \___|  |\n"
-        "*=========================================*\n"
-        "|       Employee Management System        |\n"
-        "*=========================================*\n"
-    )
+        Returns:
+            None
+        """
+        hive_logo = (
+            "*=========================================*\n"
+            "|  _____ _            _   _ _             |\n"
+            "| |_   _| |          | | | (_)            |\n"
+            "|   | | | |__   ___  | |_| |___   _____   |\n"
+            "|   | | | '_ \ / _ \ |  _  | \ \ / / _ \  |\n"
+            "|   | | | | | |  __/ | | | | |\ V /  __/  |\n"
+            "|   \_/ |_| |_|\___| \_| |_/_| \_/ \___|  |\n"
+            "*=========================================*\n"
+            "|       Employee Management System        |\n"
+            "*=========================================*\n"
+        )
+        os.system('cls' if os.name == 'nt' else 'clear')
+        print(hive_logo)
 
-    print(hive_logo)
+    @staticmethod
+    def display_main_menu() -> None:
+        """Prints the main menu.
 
-while True:
-    print("\n Menu:")
-    print("**********")
-    print(" 1. Create table EmployeeUoB")
-    print(" 2. Insert data into EmployeeUoB")
-    print(" 3. Select all data into EmployeeUoB")
-    print(" 4. Search an employee")
-    print(" 5. Update data some records")
-    print(" 6. Delete data some records")
-    print(" 7. Exit\n")
+        Returns:
+            None
+        """
+        main_menu = (
+            "Main Menu: \n\n"
+            " 1. Create table EmployeeUoB\n"
+            " 2. Insert data into EmployeeUoB\n"
+            " 3. Select all data into EmployeeUoB\n"
+            " 4. Search an employee\n"
+            " 5. Update data some records\n"
+            " 6. Delete data some records\n"
+            " 7. Help\n"
+            " 8. Exit\n"
+        )
+        print(main_menu)
 
-    __choose_menu = int(input("Enter your choice: "))
-    db_ops = DBOperations()
-    if __choose_menu == 1:
-        db_ops.create_table()
-    elif __choose_menu == 2:
-        db_ops.insert_data()
-    elif __choose_menu == 3:
-        db_ops.select_all()
-    elif __choose_menu == 4:
-        db_ops.search_data()
-    elif __choose_menu == 5:
-        db_ops.update_data()
-    elif __choose_menu == 6:
-        db_ops.delete_data()
-    elif __choose_menu == 7:
-        exit(0)
-    else:
-        print("Invalid Choice")
+    @staticmethod
+    def display_help_message() -> None:
+        help_message = (
+            "Welcome to The Hive - your one-stop solution for employee data management.\n\n"
+            "This application allows you to store, update, delete and filter employee \n"
+            "records. \n\n"
+            "Key fields stored in The Hive are:\n"
+            "    - Employee ID\n"
+            "    - Title\n"
+            "    - Forename\n"
+            "    - Surname\n"
+            "    - Email Address\n"
+            "    - Salary\n\n"
+            "To get started, simply select an option in the main menu and follow the \n"
+            "instructions on the screen.\n\n"
+            "Stay tuned as new features are being released weekly. To see the latest \n"
+            "release notes, please visit https://www.the-hive-application.io/release-log\n"
+        )
+        print(help_message)
+
+
+def run():
+    while True:
+        Menu.display_logo()
+        Menu.display_main_menu()
+        choose_menu = int(input("Enter your choice: "))
+        db_ops = DBOperations()
+
+        if choose_menu == 1:
+            db_ops.create_table()
+        elif choose_menu == 2:
+            db_ops.insert_data()
+        elif choose_menu == 3:
+            db_ops.select_all()
+        elif choose_menu == 4:
+            db_ops.search_data()
+        elif choose_menu == 5:
+            db_ops.update_data()
+        elif choose_menu == 6:
+            db_ops.delete_data()
+        elif choose_menu == 7:
+            Menu.display_logo()
+            Menu.display_help_message()
+            input("Press Enter to return to the main menu...")
+        elif choose_menu == 8:
+            exit(0)
+        else:
+            print("Invalid choice - please try again\n\n")
+            input("Press Enter to continue...")
+
+
+if __name__ == "__main__":
+    run()
