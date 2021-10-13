@@ -75,7 +75,7 @@ class DBOperations:
             self.cur.execute(self.sql_queries_dict["sql_insert"], tuple(emp.employee_str_no_id().split("\n")))
 
             self.conn.commit()
-            print(f"Inserted record for {emp.forename} {emp.surname} successfully")
+            print(f"\nInserted record for {emp.forename} {emp.surname} successfully\n")
         except Exception as e:
             print(e)
         finally:
@@ -122,15 +122,34 @@ class DBOperations:
             print(e)
         finally:
             self.conn.close()
+    '''
 
     def update_data(self):
         try:
             self.get_connection()
 
             # Update statement
+            valid_id = False
+            id_update = 0
+            while not valid_id:
+                try:
+                    id_update = input("\nSelect the ID of the employee record to update. To exit press q: ")
+                    if id_update.lower() == "q":
+                        return
+                    else:
+                        id_update = int(id_update)
+                    valid_id = True
+                except ValueError:
+                    print("Please try again - enter a valid integer ID.")
 
-            if result.rowcount != 0:
-                print(str(result.rowcount) + "Row(s) affected.")
+            result = self.cur.execute(self.sql_queries_dict["sql_select_id"], (id_update,)).fetchall()
+
+            if len(result) != 0:
+                valid_field = False
+                field = ""
+                while not valid_field:
+                    input("Please input a field to update: ")
+                print(str(len(result)) + "Row(s) affected.")
             else:
                 print("Cannot find this record in the database")
 
@@ -139,22 +158,43 @@ class DBOperations:
         finally:
             self.conn.close()
 
-    # Define Delete_data method to delete data from the table. The user will need to input the employee id to delete the 
-    # corresponding record.
+
     def delete_data(self):
+        # Define Delete_data method to delete data from the table. The user will need to input the employee id to
+        # delete the corresponding record.
         try:
             self.get_connection()
+            self.select_all()  # Display the records for the user to choose from
+            self.cur.execute(self.sql_queries_dict["sql_select_all"])
+            results = self.cur.fetchall()
 
-            if result.rowcount != 0:
-                print(str(result.rowcount) + "Row(s) affected.")
+            # TODO: move to validation
+            valid_id = False
+            id_delete = 0
+            while not valid_id:
+                try:
+                    id_delete = input("\nSelect the ID of the employee record to delete. To exit press q: ")
+                    if id_delete.lower() == "q":
+                        return
+                    else:
+                        id_delete = int(id_delete)
+                    valid_id = True
+                except ValueError:
+                    print("Please try again - enter a valid integer ID.")
+
+            result = self.cur.execute(self.sql_queries_dict["sql_select_id"], (id_delete,)).fetchall()
+
+            if len(result) != 0:
+                print(str(len(result)) + " row(s) affected.")
+                result = self.cur.execute(self.sql_queries_dict["sql_delete_data"], (id_delete,)).fetchall()
+                self.conn.commit()
             else:
-                print("Cannot find this record in the database")
+                print("\nCannot find this record in the database.\n")
 
         except Exception as e:
             print(e)
         finally:
             self.conn.close()
-    '''
 
 
 class Employee:
@@ -217,6 +257,10 @@ class Employee:
             self.salary)
 
 
+class Validation:
+    pass
+
+
 class Menu:
 
     @staticmethod
@@ -254,8 +298,8 @@ class Menu:
             " 2. Insert data into EmployeeUoB\n"
             " 3. Select all data into EmployeeUoB\n"
             " 4. Search an employee\n"
-            " 5. Update data some records\n"
-            " 6. Delete data some records\n"
+            " 5. Update records\n"
+            " 6. Delete record\n"
             " 7. Help\n"
             " 8. Exit\n"
         )
@@ -292,7 +336,7 @@ class Menu:
                   "--------|--------------+"
                   )
             for id, title, forename, surname, email, salary in results:
-                print("|{:<13}|{:<9}|{:<25}|{:<25}|{:<30}|£{:<13.2f}|".format(
+                print("| {:<12}| {:<8}| {:<24}| {:<24}| {:<29}| £{:<12.2f}|".format(
                     id, title, forename, surname, email, float(salary)))
             print("+--------------------------------------------------------------------------------------------------"
                   "-----------------------+\n")
@@ -324,7 +368,9 @@ def run():
             elif choose_menu == 5:
                 db_ops.update_data()
             elif choose_menu == 6:
+                Menu.display_logo()
                 db_ops.delete_data()
+                input("Press Enter to return to the main menu...")
             elif choose_menu == 7:
                 Menu.display_logo()
                 Menu.display_help_message()

@@ -5,6 +5,6 @@
   "sql_select_all": "SELECT * FROM employee",
   "sql_search_id": "SELECT * FROM employee WHERE id = ?",
   "sql_update_data": "UPDATE employee SET ? = ? WHERE id = ?",
-  "sql_delete_data": "DELETE FROM employee WHERE ? = ?",
+  "sql_delete_data": "DELETE FROM employee WHERE id = ?",
   "sql_drop_table": "DROP TABLE employee"
 }

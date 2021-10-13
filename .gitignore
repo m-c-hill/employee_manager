@@ -133,3 +133,6 @@ notes.txt
 
 # Testing
 testing.py
+
+# PyCharm IDE
+.idea
