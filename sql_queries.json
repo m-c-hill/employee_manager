@@ -5,7 +5,11 @@
   "sql_select_all": "SELECT * FROM employee",
   "sql_select_id": "SELECT * FROM employee WHERE id = ?",
   "sql_select_surname": "SELECT * FROM employee WHERE surname = ?",
-  "sql_update_data": "UPDATE employee SET ? = ? WHERE id = ?",
   "sql_delete_data": "DELETE FROM employee WHERE id = ?",
-  "sql_drop_table": "DROP TABLE employee"
+  "sql_drop_table": "DROP TABLE employee",
+  "create_admin_table": "CREATE TABLE IF NOT EXISTS admin (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT NOT NULL, password TEXT NOT NULL, email TEXT NOT NULL)",
+  "populate_admin_table": "INSERT INTO admin(username, password, email) VALUES('admin', 'password123', 'admin@the-hive.io')",
+  "get_admin_password": "SELECT password FROM admin WHERE username = ?",
+  "check_admin_exists": "SELECT * FROM admin WHERE username = ?",
+  "get_admin_email": "SELECT email FROM admin WHERE username = ?"
 }
