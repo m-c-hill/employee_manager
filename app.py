@@ -23,17 +23,19 @@ class DBOperations:
         finally:
             self.conn.close()
 
-    '''
-    def get_connection(self):
+    def get_connection(self) -> None:
         self.conn = sqlite3.connect("DBName.db")
         self.cur = self.conn.cursor()
 
-    def create_table(self):
+    def create_table(self) -> None:
         try:
             self.get_connection()
-            self.cur.execute(self.sql_create_table)
-            self.conn.commit()
-            print("Table created successfully")
+            if not self.conn.execute(self.sql_queries_dict["check_table_exists"]).fetchone():
+                self.cur.execute(self.sql_queries_dict["sql_create_table"])
+                self.conn.commit()
+                print("\nTable 'employee' created successfully\n")
+            else:
+                print("\nThis table is already created\n")
         except Exception as e:
             print(e)
         finally:
@@ -44,12 +46,36 @@ class DBOperations:
             self.get_connection()
 
             emp = Employee()
-            emp.set_employee_id(int(input("Enter Employee ID: ")))
 
-            self.cur.execute(self.sql_insert, tuple(str(emp).split("\n")))
+            # TODO: validation class
+            title_valid = False
+            while not title_valid:
+                title = input("\nEnter Employee title: ")
+                if not Employee.validate_title(title):
+                    print(f"\n{title} is not a valid title. Please choose from the following: \n"
+                          f"Mr, Mrs, Miss, Ms, Dr, Sir, Prof or Captain.\n")
+                else:
+                    emp.set_employee_title(title.capitalize())
+                    title_valid = True
+
+            emp.set_employee_forename(str(input("\nEnter Employee forename: ")).capitalize())
+            emp.set_employee_surname(str(input("\nEnter Employee surname: ")).capitalize())
+            emp.set_employee_email(str(input("\nEnter Employee email address: ")))
+
+            salary_valid = False
+            while not salary_valid:
+                salary = input("\nEnter Employee salary: £")
+                try:
+                    salary = float(salary)
+                    emp.set_employee_salary(salary)
+                    salary_valid = True
+                except ValueError:
+                    print("Invalid input - please enter a number.\n")
+
+            self.cur.execute(self.sql_queries_dict["sql_insert"], tuple(emp.employee_str_no_id().split("\n")))
 
             self.conn.commit()
-            print("Inserted data successfully")
+            print(f"Inserted record for {emp.forename} {emp.surname} successfully")
         except Exception as e:
             print(e)
         finally:
@@ -58,16 +84,17 @@ class DBOperations:
     def select_all(self):
         try:
             self.get_connection()
-            self.cur.execute(self.sql_select_all)
+            self.cur.execute(self.sql_queries_dict["sql_select_all"])
             results = self.cur.fetchall()
 
-            # think how you could develop this method to show the records
+            Menu.display_results_table(results)
 
         except Exception as e:
             print(e)
         finally:
             self.conn.close()
 
+    '''
     def search_data(self):
         try:
             self.get_connection()
@@ -145,16 +172,16 @@ class Employee:
     def set_employee_title(self, title):
         self.title = title
 
-    def set_forename(self, forename):
+    def set_employee_forename(self, forename):
         self.forename = forename
 
-    def set_surname(self, surname):
+    def set_employee_surname(self, surname):
         self.surname = surname
 
-    def set_email(self, email):
+    def set_employee_email(self, email):
         self.email = email
 
-    def set_salary(self, salary):
+    def set_employee_salary(self, salary):
         self.salary = salary
 
     def get_employee_id(self):
@@ -174,6 +201,15 @@ class Employee:
 
     def get_salary(self):
         return self.salary
+
+    @staticmethod
+    def validate_title(title):
+        titles = ['Mr', 'Mrs', 'Miss', 'Ms', 'Dr', 'Sir', 'Prof', 'Captain']
+        return title.strip().capitalize() in titles
+
+    def employee_str_no_id(self):
+        return self.title + "\n" + self.forename + "\n" + self.surname + "\n" + self.email + "\n" + str(
+            self.salary)
 
     def __str__(self):
         return str(
@@ -245,34 +281,61 @@ class Menu:
         )
         print(help_message)
 
+    @staticmethod
+    def display_results_table(results) -> None:
+        if len(results) > 0:
+            print("+--------------------------------------------------------------------------------------------------"
+                  "-----------------------+\n"
+                  "+ Employee ID |  Title  |         Forename        |         Surname         |         Email Address"
+                  "        |    Salary    |\n"
+                  "+-------------|---------|-------------------------|-------------------------|----------------------"
+                  "--------|--------------+"
+                  )
+            for id, title, forename, surname, email, salary in results:
+                print("|{:<13}|{:<9}|{:<25}|{:<25}|{:<30}|£{:<13.2f}|".format(
+                    id, title, forename, surname, email, float(salary)))
+            print("+--------------------------------------------------------------------------------------------------"
+                  "-----------------------+\n")
+        else:
+            print("No results to display.")
+
 
 def run():
+    db_ops = DBOperations()
     while True:
         Menu.display_logo()
         Menu.display_main_menu()
-        choose_menu = int(input("Enter your choice: "))
-        db_ops = DBOperations()
 
-        if choose_menu == 1:
-            db_ops.create_table()
-        elif choose_menu == 2:
-            db_ops.insert_data()
-        elif choose_menu == 3:
-            db_ops.select_all()
-        elif choose_menu == 4:
-            db_ops.search_data()
-        elif choose_menu == 5:
-            db_ops.update_data()
-        elif choose_menu == 6:
-            db_ops.delete_data()
-        elif choose_menu == 7:
-            Menu.display_logo()
-            Menu.display_help_message()
-            input("Press Enter to return to the main menu...")
-        elif choose_menu == 8:
-            exit(0)
-        else:
-            print("Invalid choice - please try again\n\n")
+        try:
+            choose_menu = int(input("Enter your choice: "))
+
+            if choose_menu == 1:
+                db_ops.create_table()
+                input("Press Enter to return to the main menu...")
+            elif choose_menu == 2:
+                db_ops.insert_data()
+                input("Press Enter to return to the main menu...")
+            elif choose_menu == 3:
+                Menu.display_logo()
+                db_ops.select_all()
+                input("Press Enter to return to the main menu...")
+            elif choose_menu == 4:
+                db_ops.search_data()
+            elif choose_menu == 5:
+                db_ops.update_data()
+            elif choose_menu == 6:
+                db_ops.delete_data()
+            elif choose_menu == 7:
+                Menu.display_logo()
+                Menu.display_help_message()
+                input("Press Enter to return to the main menu...")
+            elif choose_menu == 8:
+                exit(0)
+            else:
+                print("\nInvalid choice - please try again\n")
+                input("Press Enter to continue...")
+        except ValueError:
+            print("\nInvalid choice - please enter a number\n")
             input("Press Enter to continue...")
 
 
